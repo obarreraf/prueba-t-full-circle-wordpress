@@ -70,4 +70,45 @@ function ep_mostrar_campos_evento($post) {
     <?php
 }
 
+function ep_guardar_evento($post_id) {
+    if (!isset($_POST['ep_evento_nonce']) || !wp_verify_nonce($_POST['ep_evento_nonce'], 'ep_guardar_evento')) {
+        return;
+    }
+
+    if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) {
+        return;
+    }
+
+    if (!current_user_can('edit_post', $post_id)) {
+        return;
+    }
+
+    if (isset($_POST['ep_fecha_evento'])) {
+        update_post_meta($post_id, '_ep_fecha_evento', sanitize_text_field($_POST['ep_fecha_evento']));
+    }
+
+    if (isset($_POST['ep_ubicacion_evento'])) {
+        update_post_meta($post_id, '_ep_ubicacion_evento', sanitize_text_field($_POST['ep_ubicacion_evento']));
+    }
+}
+add_action('save_post', 'ep_guardar_evento');
+
+function ep_agregar_columnas_eventos($columns) {
+    $columns['ep_fecha_evento'] = 'Fecha del Evento';
+    $columns['ep_ubicacion_evento'] = 'Ubicación';
+    return $columns;
+}
+add_filter('manage_events_posts_columns', 'ep_agregar_columnas_eventos');
+
+function ep_mostrar_columnas_eventos($column, $post_id) {
+    if ($column === 'ep_fecha_evento') {
+        $fecha = get_post_meta($post_id, '_ep_fecha_evento', true);
+        echo esc_html($fecha);
+    }
+    if ($column === 'ep_ubicacion_evento') {
+        $ubicacion = get_post_meta($post_id, '_ep_ubicacion_evento', true);
+        echo esc_html($ubicacion);
+    }
+}
+add_action('manage_events_posts_custom_column', 'ep_mostrar_columnas_eventos', 10, 2);
 ?>
