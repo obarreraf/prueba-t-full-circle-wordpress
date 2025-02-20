@@ -113,13 +113,16 @@ function ep_mostrar_columnas_eventos($column, $post_id) {
 add_action('manage_events_posts_custom_column', 'ep_mostrar_columnas_eventos', 10, 2);
 
 function ep_mostrar_proximos_eventos($atts) {
-    ob_start();
+    $atts = shortcode_atts(array(
+        'posts_per_page' => 6,
+    ), $atts, 'proximos_eventos');
 
     $hoy = date('Y-m-d');
+    $paged = get_query_var('paged') ? get_query_var('paged') : 1; 
 
     $args = array(
         'post_type'      => 'events',
-        'posts_per_page' => 6,
+        'posts_per_page' => intval($atts['posts_per_page']),
         'meta_key'       => '_ep_fecha_evento',
         'orderby'        => 'meta_value',
         'order'          => 'ASC',
@@ -130,10 +133,12 @@ function ep_mostrar_proximos_eventos($atts) {
                 'compare' => '>=',
                 'type'    => 'DATE'
             )
-        )
+        ),
+        'paged'          => $paged, 
     );
 
     $eventos = new WP_Query($args);
+    ob_start(); 
 
     if ($eventos->have_posts()) {
         echo '<ul class="proximos-eventos">';
@@ -141,20 +146,31 @@ function ep_mostrar_proximos_eventos($atts) {
             $eventos->the_post();
             $fecha = get_post_meta(get_the_ID(), '_ep_fecha_evento', true);
             $ubicacion = get_post_meta(get_the_ID(), '_ep_ubicacion_evento', true);
-            
+
             echo '<li>';
             echo '<strong><a href="' . get_permalink() . '">' . get_the_title() . '</a></strong><br>';
             echo '📅 ' . esc_html($fecha) . ' - 📍 ' . esc_html($ubicacion);
             echo '</li>';
         }
         echo '</ul>';
+
+        echo '<div class="paginacion-eventos">';
+        echo paginate_links(array(
+            'total'   => $eventos->max_num_pages,
+            'current' => $paged,
+            'format'  => '?paged=%#%',
+            'prev_text' => '« Anterior',
+            'next_text' => 'Siguiente »'
+        ));
+        echo '</div>';
     } else {
         echo '<p>No hay próximos eventos.</p>';
     }
 
-    wp_reset_postdata();
+    wp_reset_postdata(); 
 
-    return ob_get_clean();
+    return ob_get_clean(); 
 }
 add_shortcode('proximos_eventos', 'ep_mostrar_proximos_eventos');
+
 ?>
