@@ -111,4 +111,50 @@ function ep_mostrar_columnas_eventos($column, $post_id) {
     }
 }
 add_action('manage_events_posts_custom_column', 'ep_mostrar_columnas_eventos', 10, 2);
+
+function ep_mostrar_proximos_eventos($atts) {
+    ob_start();
+
+    $hoy = date('Y-m-d');
+
+    $args = array(
+        'post_type'      => 'events',
+        'posts_per_page' => 6,
+        'meta_key'       => '_ep_fecha_evento',
+        'orderby'        => 'meta_value',
+        'order'          => 'ASC',
+        'meta_query'     => array(
+            array(
+                'key'     => '_ep_fecha_evento',
+                'value'   => $hoy,
+                'compare' => '>=',
+                'type'    => 'DATE'
+            )
+        )
+    );
+
+    $eventos = new WP_Query($args);
+
+    if ($eventos->have_posts()) {
+        echo '<ul class="proximos-eventos">';
+        while ($eventos->have_posts()) {
+            $eventos->the_post();
+            $fecha = get_post_meta(get_the_ID(), '_ep_fecha_evento', true);
+            $ubicacion = get_post_meta(get_the_ID(), '_ep_ubicacion_evento', true);
+            
+            echo '<li>';
+            echo '<strong><a href="' . get_permalink() . '">' . get_the_title() . '</a></strong><br>';
+            echo '📅 ' . esc_html($fecha) . ' - 📍 ' . esc_html($ubicacion);
+            echo '</li>';
+        }
+        echo '</ul>';
+    } else {
+        echo '<p>No hay próximos eventos.</p>';
+    }
+
+    wp_reset_postdata();
+
+    return ob_get_clean();
+}
+add_shortcode('proximos_eventos', 'ep_mostrar_proximos_eventos');
 ?>
