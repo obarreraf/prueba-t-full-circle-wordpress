@@ -41,4 +41,33 @@ function ep_registrar_eventos_cpt() {
 }
 add_action('init', 'ep_registrar_eventos_cpt');
 
+function ep_agregar_campos_eventos() {
+    add_meta_box(
+        'ep_evento_metabox',
+        'Detalles del Evento',
+        'ep_mostrar_campos_evento',
+        'events',
+        'side',
+        'default'
+    );
+}
+add_action('add_meta_boxes', 'ep_agregar_campos_eventos');
+
+function ep_mostrar_campos_evento($post) {
+    $fecha = get_post_meta($post->ID, '_ep_fecha_evento', true);
+    $ubicacion = get_post_meta($post->ID, '_ep_ubicacion_evento', true);
+
+    wp_nonce_field('ep_guardar_evento', 'ep_evento_nonce');
+    ?>
+    <p>
+        <label for="ep_fecha_evento">Fecha del evento:</label>
+        <input type="date" id="ep_fecha_evento" name="ep_fecha_evento" value="<?php echo esc_attr($fecha); ?>" />
+    </p>
+    <p>
+        <label for="ep_ubicacion_evento">Ubicación:</label>
+        <input type="text" id="ep_ubicacion_evento" name="ep_ubicacion_evento" value="<?php echo esc_attr($ubicacion); ?>" />
+    </p>
+    <?php
+}
+
 ?>
